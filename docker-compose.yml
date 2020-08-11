@@ -1,0 +1,43 @@
+# docker-composeのバージョン
+version: '3'
+
+# Docker Volumeを定義
+volumes:
+  db-data:
+
+# 複数のサービス（コンテナ）を入れる
+services:
+  # サービス名（Rails）
+  web:
+    # Dockerfileのビルドコンテキストを指定
+    build: .
+    # -pオプションで指定する内容（ポート番号）
+    ports:
+      - '3000:3000'
+    # -vオプションで指定する内容（ファイルシステム共有）
+    # 誰が起動しても同じ結果になるように相対パスを指定
+    volumes:
+      - '.:/docker-rails'
+    # 環境変数を設定（本番環境では直接記述しない）
+    environment:
+      - 'POSTGRES_PASSWORD=postgres'
+    # -itオプションで指定する内容
+    tty: true
+    stdin_open: true
+    # 先にdb serviceを作成
+    depends_on:
+      - db
+    # webからdbにアクセス
+    links:
+      - db
+
+  # サービス名（DB)
+  db:
+    # imageをそのまま使用
+    image: postgres
+    # コンテナのDBのデータをDocker Volumeに保管
+    # コンテナ削除してもデータは保管される
+    volumes:
+      - 'db-data:/var/lib/postgresql/data'
+    environment:
+      - 'POSTGRES_PASSWORD=postgres'
